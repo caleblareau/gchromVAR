@@ -50,26 +50,6 @@ setMethod("computeWeightedDeviations", c(object = "SummarizedExperiment",
                                     rowData = colData(annotations))
           })
 
-#' @describeIn computeWeightedDeviations object is SummarizedExperiment,
-#' annotations are Matrix
-#' @export
-setMethod("computeWeightedDeviations",
-          c(object = "SummarizedExperiment", annotations = "MatrixOrmatrix"),
-          function(object, annotations,
-                   background_peaks = getBackgroundPeaks(object),
-                   expectation = computeExpectations(object)) {
-            
-            stopifnot(canCoerce(annotations, "lMatrix"))
-            annotations <- as(annotations, "lMatrix")
-            object <- counts_check(object)
-            peak_indices <- convert_to_ix_list(annotations)
-            compute_weighted_deviations_core(counts(object),
-                                    peak_indices,
-                                    background_peaks,
-                                    expectation,
-                                    colData = colData(object))
-          })
-
 
 #' @describeIn computeWeightedDeviations object is SummarizedExperiment,
 #' annotations are list
@@ -107,62 +87,6 @@ setMethod("computeWeightedDeviations", c(object = "SummarizedExperiment",
                                     colData = colData(object))
           })
 
-#' @describeIn computeWeightedDeviations object and annotations are SummarizedExperiment
-#' @export
-setMethod("computeWeightedDeviations", c(object = "MatrixOrmatrix",
-                                  annotations = "SummarizedExperiment"),
-          function(object,
-                   annotations,
-                   background_peaks,
-                   expectation = computeExpectations(object)) {
-            peak_indices <- convert_to_ix_list(annotationMatches(annotations))
-            compute_weighted_deviations_core(object, peak_indices, background_peaks,
-                                    expectation,
-                                    rowData = colData(annotations))
-          })
-
-#' @describeIn computeWeightedDeviations object is SummarizedExperiment,
-#' annotations are Matrix
-#' @export
-setMethod("computeWeightedDeviations", c(object = "MatrixOrmatrix",
-                                  annotations = "MatrixOrmatrix"),
-          function(object, annotations, background_peaks,
-                   expectation = computeExpectations(object)) {
-            stopifnot(canCoerce(annotations, "lMatrix"))
-            annotations <- as(annotations, "lMatrix")
-            peak_indices <- convert_to_ix_list(annotations)
-            compute_deviations_core(object,
-                                    peak_indices,
-                                    background_peaks,
-                                    expectation)
-          })
-
-
-#' @describeIn computeWeightedDeviations object is SummarizedExperiment,
-#' annotations are list
-#' @export
-setMethod("computeWeightedDeviations", c(object = "MatrixOrmatrix",
-                                  annotations = "list"),
-          function(object, annotations, background_peaks,
-                   expectation = computeExpectations(object)) {
-            compute_deviations_core(object, annotations,
-                                    background_peaks, expectation)
-          })
-
-#' @describeIn computeWeightedDeviations object is SummarizedExperiment,
-#' annotations are missing
-#' @export
-setMethod("computeWeightedDeviations", c(object = "MatrixOrmatrix",
-                                  annotations = "missingOrNULL"),
-          function(object, annotations,
-                   background_peaks,
-                   expectation = computeExpectations(object)) {
-            message(paste0("Annotations not provided, ",
-                           "so chromVAR being run on individual peaks..."))
-            peak_indices <- split(seq_len(nrow(object)), seq_len(nrow(object)))
-            compute_deviations_core(object, peak_indices, background_peaks,
-                                    expectation)
-          })
 
 compute_weighted_deviations_core <- function(counts_mat,
                                     peak_indices,
