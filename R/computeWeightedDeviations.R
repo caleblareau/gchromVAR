@@ -15,9 +15,9 @@
 #' @details multiprocessing using \code{\link[BiocParallel]{bplapply}}
 #' @return  \code{\link{chromVARDeviations-class}}, which inherits from
 #' SummarizedExperiment, and has two assays: deviations and deviation scores.
-#' @seealso  \code{\link{computeVariability}}, \code{\link{plotVariability}}
+#' @import chromVAR
 #' @export
-#' @author Caleb Lareau, Alicia Schep
+#' @author Caleb Lareau
 #' @examples
 #' # Register BiocParallel
 #' BiocParallel::register(BiocParallel::SerialParam())

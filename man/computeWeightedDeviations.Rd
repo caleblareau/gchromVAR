@@ -64,9 +64,6 @@ data(mini_ix, package = "chromVAR")
 dev <- computeWeightedDeviations(object = mini_counts,
                          annotations = mini_ix)
 }
-\seealso{
-\code{\link{computeVariability}}, \code{\link{plotVariability}}
-}
 \author{
-Caleb Lareau, Alicia Schep
+Caleb Lareau
 }
