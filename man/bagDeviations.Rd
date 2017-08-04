@@ -36,7 +36,7 @@ bagged.
 
 \examples{
 
-rdsA<-paste0(system.file('rds',package='buenVAR'),'/dev_humanSimple.rds')
+rdsA<-paste0(system.file('rds',package='chromVARxx'),'/dev_humanSimple.rds')
 object <- readRDS(rdsA)
 bagged <- bagDeviations(object, cor = 0.3, organism = "human")
 

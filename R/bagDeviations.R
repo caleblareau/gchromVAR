@@ -17,7 +17,7 @@
 #' @author Caleb Lareau
 #' @examples
 #'
-#' rdsA<-paste0(system.file('rds',package='buenVAR'),'/dev_humanSimple.rds')
+#' rdsA<-paste0(system.file('rds',package='chromVARxx'),'/dev_humanSimple.rds')
 #' object <- readRDS(rdsA)
 #' bagged <- bagDeviations(object, cor = 0.3, organism = "human")
 #' 
@@ -41,7 +41,7 @@ setMethod("bagDeviations", c(object = "chromVARDeviations", cor = "numeric", org
     TFnames <- names(vb)
     
     # Import correlation based on PWMS for the organism
-    rdsA <- paste0(system.file('cisBP_correlation',package='buenVAR'),'/', 
+    rdsA <- paste0(system.file('cisBP_correlation',package='chromVARxx'),'/', 
                  organism, '_cisBP_correlationMatrix.rds')
     
     cormat <- readRDS(rdsA)

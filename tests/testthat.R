@@ -1,4 +1,4 @@
 library(testthat)
-library(buenVAR)
+library(chromVARxx)
 
-test_check("buenVAR")
+test_check("chromVARxx")
