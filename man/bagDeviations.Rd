@@ -38,7 +38,7 @@ bagged.
 
 rdsA<-paste0(system.file('rds',package='buenVAR'),'/dev_humanSimple.rds')
 object <- readRDS(rdsA)
-bagged <- bagDeviations(object)
+bagged <- bagDeviations(object, cor = 0.3, organism = "human")
 
 }
 \author{

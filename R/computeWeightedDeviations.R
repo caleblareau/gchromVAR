@@ -1,5 +1,3 @@
-# Generic Functions ------------------------------------------------------------
-
 #' computeWeightedDeviations
 #'
 #' Computes weighted deviations in chromatin accessibility
@@ -66,27 +64,6 @@ setMethod("computeWeightedDeviations",
                                     expectation,
                                     colData = colData(object))
           })
-
-#' @describeIn computeWeightedDeviations object is SummarizedExperiment,
-#' annotations are missing
-#' @export
-setMethod("computeWeightedDeviations", c(object = "SummarizedExperiment",
-                                  annotations = "missingOrNULL"),
-          function(object,
-                   annotations,
-                   background_peaks = getBackgroundPeaks(object),
-                   expectation = computeExpectations(object)) {
-            message(paste0("Annotations not provided, ",
-                           "so chromVAR being run on individual peaks..."))
-            object <- counts_check(object)
-            peak_indices <- split(seq_len(nrow(object)), seq_len(nrow(object)))
-            compute_weighted_deviations_core(counts(object),
-                                    peak_indices,
-                                    background_peaks,
-                                    expectation,
-                                    colData = colData(object))
-          })
-
 
 compute_weighted_deviations_core <- function(counts_mat,
                                     peak_indices,

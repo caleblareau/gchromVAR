@@ -1,2 +1,2 @@
 # buenVAR
-Buenrostrolab updates/added functionality to chromVAR
+Buenrostro Lab updates/added functionality to chromVAR

@@ -5,7 +5,6 @@
 \alias{computeWeightedDeviations}
 \alias{computeWeightedDeviations,SummarizedExperiment,SummarizedExperiment-method}
 \alias{computeWeightedDeviations,SummarizedExperiment,list-method}
-\alias{computeWeightedDeviations,SummarizedExperiment,missingOrNULL-method}
 \title{computeWeightedDeviations}
 \usage{
 computeWeightedDeviations(object, annotations, ...)
@@ -16,11 +15,6 @@ computeWeightedDeviations(object, annotations, ...)
   expectation = computeExpectations(object))
 
 \S4method{computeWeightedDeviations}{SummarizedExperiment,list}(object,
-  annotations, background_peaks = getBackgroundPeaks(object),
-  expectation = computeExpectations(object))
-
-
-  \S4method{computeWeightedDeviations}{SummarizedExperiment,missingOrNULL}(object,
   annotations, background_peaks = getBackgroundPeaks(object),
   expectation = computeExpectations(object))
 }
@@ -56,9 +50,6 @@ multiprocessing using \code{\link[BiocParallel]{bplapply}}
 
 \item \code{object = SummarizedExperiment,annotations = list}: object is SummarizedExperiment,
 annotations are list
-
-\item \code{object = SummarizedExperiment,annotations = missingOrNULL}: object is SummarizedExperiment,
-annotations are missing
 }}
 
 \examples{
