@@ -45,7 +45,7 @@ value per peak if nothing is determined.
 
 files <- list.files(system.file('extdata',package='chromVARxx'), full.names = TRUE)
 data(mini_counts, package = "chromVAR")
-w_se <- importBedScore(rowRanges(mini_counts), files)
+w_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
 
 }
 \author{

@@ -20,16 +20,16 @@
 #' ahead of time. By default, 0. 
 #' @import GenomicRanges 
 #' @import SummarizedExperiment
-#' @importFrom Matrix Matrix
+#' @importFrom Matrix Matrix sparseMatrix colSums
 #' @importFrom utils read.table
-#' @import S4Vectors
+#' @importFrom S4Vectors queryHits subjectHits DataFrame
 #' @export 
 #' @author Caleb Lareau
 #' @examples
 #'
 #' files <- list.files(system.file('extdata',package='chromVARxx'), full.names = TRUE)
 #' data(mini_counts, package = "chromVAR")
-#' w_se <- importBedScore(rowRanges(mini_counts), files)
+#' w_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
 #' 
 setGeneric("importBedScore",
    function(ranges, files, colidx = 5, FUN = sum, default.val = 0) standardGeneric("importBedScore"))
@@ -54,7 +54,7 @@ setMethod("importBedScore", c(ranges = "GRanges", files = "character", colidx = 
     # Get overlaps / summarized statistic summarized by function
     ov <- findOverlaps(ranges, hitG)
     score <- rep(default.val, length(ranges))
-    ss <- tapply(hitdf[GenomicRanges::subjectHits(ov), colidx], GenomicRanges::queryHits(ov), FUN = FUN)
+    ss <- tapply(hitdf[subjectHits(ov), colidx], queryHits(ov), FUN = FUN)
     score[as.integer(names(ss))] <- unname(ss)
     score
   })

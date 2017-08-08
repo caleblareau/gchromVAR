@@ -17,6 +17,7 @@
 #' SummarizedExperiment, and has two assays: deviations and deviation scores.
 #' @import chromVAR
 #' @import BiocParallel
+#' @importFrom stats sd
 #' @export
 #' @author Caleb Lareau
 #' @examples
