@@ -13,6 +13,8 @@
 #' chromVAR after 
 #' @param cor = 0.7 minimum correlation between PWMS
 #' @param organism = "human"; only other option is "mouse"
+#' @import chromVAR
+#' @import SummarizedExperiment
 #' @export
 #' @author Caleb Lareau
 #' @examples

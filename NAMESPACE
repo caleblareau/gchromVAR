@@ -2,7 +2,12 @@
 
 export(bagDeviations)
 export(computeWeightedDeviations)
+export(importBedScore)
 exportMethods(bagDeviations)
 exportMethods(computeWeightedDeviations)
+exportMethods(importBedScore)
+import(GenomicRanges)
+import(Matrix)
+import(SummarizedExperiment)
 import(chromVAR)
 import(methods)

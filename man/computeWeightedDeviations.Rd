@@ -57,12 +57,13 @@ annotations are list
 BiocParallel::register(BiocParallel::SerialParam())
 # Load very small example counts (already filtered)
 data(mini_counts, package = "chromVAR")
-# load annotation matrix; result from matchMotifs
-data(mini_ix, package = "chromVAR")
+# Load mini weighted counts
+rdsA<-paste0(system.file('rds',package='chromVARxx'),'/mini_w')
+object <- readRDS(rdsA)
 
 # computing deviations
-dev <- computeWeightedDeviations(object = mini_counts,
-                         annotations = mini_ix)
+wdev <- computeWeightedDeviations(object = mini_counts,
+                         annotations = mini_w)
 }
 \author{
 Caleb Lareau

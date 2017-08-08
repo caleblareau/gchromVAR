@@ -23,12 +23,13 @@
 #' BiocParallel::register(BiocParallel::SerialParam())
 #' # Load very small example counts (already filtered)
 #' data(mini_counts, package = "chromVAR")
-#' # load annotation matrix; result from matchMotifs
-#' data(mini_ix, package = "chromVAR")
+#' # Load mini weighted counts
+#' rdsA<-paste0(system.file('rds',package='chromVARxx'),'/mini_w')
+#' object <- readRDS(rdsA)
 #'
 #' # computing deviations
-#' dev <- computeWeightedDeviations(object = mini_counts,
-#'                          annotations = mini_ix)
+#' wdev <- computeWeightedDeviations(object = mini_counts,
+#'                          annotations = mini_w)
 setGeneric("computeWeightedDeviations",
    function(object, annotations, ...) standardGeneric("computeWeightedDeviations"))
 
@@ -38,7 +39,7 @@ setMethod("computeWeightedDeviations", c(object = "SummarizedExperiment",
                                          annotations = "SummarizedExperiment"),
   function(object, annotations, background_peaks = getBackgroundPeaks(object),
                    expectation = computeExpectations(object)) {
-            object <- counts_check(object)
+            o
             peak_indices <- convert_to_ix_list(annotationMatches(annotations))
             compute_weighted_deviations_core(counts(object),
                                     peak_indices,
@@ -107,10 +108,6 @@ compute_weighted_deviations_core <- function(counts_mat,
   dev <- t(vapply(results, function(x) x[["dev"]], rep(0, ncol(counts_mat))))
 
   colnames(z) <- colnames(dev) <- sample_names
-
-  #rowData$fractionMatches <- vapply(results, function(x) x[["matches"]], 0)
-  #rowData$fractionBackgroundOverlap <- vapply(results, function(x) x[["overlap"]], 0)
-  
   out <- SummarizedExperiment(assays = list(deviations = dev, z = z),
                               colData = colData,
                               rowData = rowData)
