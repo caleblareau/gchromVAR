@@ -4,24 +4,29 @@
 \name{computeWeightedDeviations}
 \alias{computeWeightedDeviations}
 \alias{computeWeightedDeviations,SummarizedExperiment,SummarizedExperiment-method}
-\alias{computeWeightedDeviations,SummarizedExperiment,list-method}
+\alias{computeWeightedDeviations,SummarizedExperiment,Matrix-method}
+\alias{computeWeightedDeviations,SummarizedExperiment,matrix-method}
 \title{computeWeightedDeviations}
 \usage{
-computeWeightedDeviations(object, annotations, ...)
+computeWeightedDeviations(object, weights, ...)
 
 
   \S4method{computeWeightedDeviations}{SummarizedExperiment,SummarizedExperiment}(object,
-  annotations, background_peaks = getBackgroundPeaks(object),
+  weights, background_peaks = getBackgroundPeaks(object),
   expectation = computeExpectations(object))
 
-\S4method{computeWeightedDeviations}{SummarizedExperiment,list}(object,
-  annotations, background_peaks = getBackgroundPeaks(object),
+\S4method{computeWeightedDeviations}{SummarizedExperiment,Matrix}(object,
+  weights, background_peaks = getBackgroundPeaks(object),
+  expectation = computeExpectations(object))
+
+\S4method{computeWeightedDeviations}{SummarizedExperiment,matrix}(object,
+  weights, background_peaks = getBackgroundPeaks(object),
   expectation = computeExpectations(object))
 }
 \arguments{
 \item{object}{chromVARCounts object}
 
-\item{annotations}{chromVARAnnotations object}
+\item{weights}{chromVARweights object}
 
 \item{...}{additional arguments}
 
@@ -38,7 +43,7 @@ SummarizedExperiment, and has two assays: deviations and deviation scores.
 }
 \description{
 Computes weighted deviations in chromatin accessibility
-across sets of annotations where the number of the annotation
+across sets of weights where the number of the annotation
 meaningful.
 }
 \details{
@@ -46,10 +51,13 @@ multiprocessing using \code{\link[BiocParallel]{bplapply}}
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{object = SummarizedExperiment,annotations = SummarizedExperiment}: / annotations are SummarizedExperiment
+\item \code{object = SummarizedExperiment,weights = SummarizedExperiment}: / weights are SummarizedExperiment
 
-\item \code{object = SummarizedExperiment,annotations = list}: object is SummarizedExperiment,
-annotations are list
+\item \code{object = SummarizedExperiment,weights = Matrix}: object is SummarizedExperiment,
+weights are in a Matrix
+
+\item \code{object = SummarizedExperiment,weights = matrix}: object is SummarizedExperiment,
+weights are in a numeric
 }}
 
 \examples{
@@ -58,12 +66,17 @@ BiocParallel::register(BiocParallel::SerialParam())
 # Load very small example counts (already filtered)
 data(mini_counts, package = "chromVAR")
 # Load mini weighted counts
-rdsA<-paste0(system.file('rds',package='chromVARxx'),'/mini_w')
-object <- readRDS(rdsA)
+rdsA<-paste0(system.file('rds',package='chromVARxx'),'/mini_w.rds')
+w_se <- readRDS(rdsA)
 
-# computing deviations
-wdev <- computeWeightedDeviations(object = mini_counts,
-                         annotations = mini_w)
+# Build weights from .bed file
+files <- list.files(system.file('extdata',package='chromVARxx'), full.names = TRUE)
+data(mini_counts, package = "chromVAR")
+uk_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
+
+wdev <- computeWeightedDeviations(mini_counts, w_se)
+ukdev <- computeWeightedDeviations(mini_counts, uk_se)
+
 }
 \author{
 Caleb Lareau

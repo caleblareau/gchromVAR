@@ -13,14 +13,28 @@ importBedScore(ranges, files, colidx = 5, FUN = sum, default.val = 0)
 }
 \arguments{
 \item{ranges}{A GRanges object corresponding to the
-peaks used to aggre}
+peaks used to aggregrate a score over}
 
-\item{files}{}
+\item{files}{A character vector of files that will
+be imported and digested for analysis}
+
+\item{colidx}{The column index of the score. This
+assumes that the first three columns specific genomic 
+coordinates. Default is 5 for the fifth column in the .bed files}
+
+\item{FUN}{Function to summarize multiple hits in the
+.bed file over the peak.}
+
+\item{default.val}{Default value to populate the matrices
+ahead of time. By default, 0.}
 }
 \description{
 Given a set of peaks (GRanges object) and a vector
 of one or more file paths of .bed files with some
-score,
+score, import these and summarize using a FUN
+over them. Also can specify which column the score 
+should be read from in the file and the default
+value per peak if nothing is determined.
 }
 \section{Methods (by class)}{
 \itemize{

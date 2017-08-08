@@ -3,14 +3,26 @@
 #' Given a set of peaks (GRanges object) and a vector
 #' of one or more file paths of .bed files with some
 #' score, import these and summarize using a FUN
-#' over them 
+#' over them. Also can specify which column the score 
+#' should be read from in the file and the default
+#' value per peak if nothing is determined. 
 #' 
 #' @param ranges A GRanges object corresponding to the
-#' peaks used to aggre 
-#' @param files 
-#' @import GenomicRanges
+#' peaks used to aggregrate a score over
+#' @param files A character vector of files that will
+#' be imported and digested for analysis
+#' @param colidx The column index of the score. This
+#' assumes that the first three columns specific genomic 
+#' coordinates. Default is 5 for the fifth column in the .bed files
+#' @param FUN Function to summarize multiple hits in the
+#' .bed file over the peak. 
+#' @param default.val Default value to populate the matrices
+#' ahead of time. By default, 0. 
+#' @import GenomicRanges 
 #' @import SummarizedExperiment
-#' @import Matrix
+#' @importFrom Matrix Matrix
+#' @importFrom utils read.table
+#' @import S4Vectors
 #' @export 
 #' @author Caleb Lareau
 #' @examples
@@ -32,6 +44,7 @@ setMethod("importBedScore", c(ranges = "GRanges", files = "character", colidx = 
     # Import Bed 
     hitdf <- read.table(file)
     stopifnot(dim(hitdf)[2] >= colidx)
+    stopifnot(3 < colidx)
     gdf <- hitdf[,c(1,2,3)]
     
     #Make GRanges
@@ -41,11 +54,12 @@ setMethod("importBedScore", c(ranges = "GRanges", files = "character", colidx = 
     # Get overlaps / summarized statistic summarized by function
     ov <- findOverlaps(ranges, hitG)
     score <- rep(default.val, length(ranges))
-    ss <- tapply(hitdf[subjectHits(ov), colidx], queryHits(ov), FUN = FUN)
+    ss <- tapply(hitdf[GenomicRanges::subjectHits(ov), colidx], GenomicRanges::queryHits(ov), FUN = FUN)
     score[as.integer(names(ss))] <- unname(ss)
     score
   })
   
+  # Make a new SummarizedExperiment and export
   nnames <-  gsub(".bed", "", basename(files))
   colnames(la) <- nnames
   se <- SummarizedExperiment(assays=list(weights=Matrix(la)),

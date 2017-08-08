@@ -1,7 +1,7 @@
 Package: chromVARxx
 Type: Package
 Title: Augmented functionality for analysis of epigenomic variance
-Version: 0.0.1
+Version: 0.1.0
 Date: 2017-08-08
 Authors@R: c(
     person("Caleb", "Lareau", email = "caleblareau@g.harvard.edu", role = c("aut", "cre"))
@@ -18,7 +18,8 @@ Imports:
     motifmatchr,
     SummarizedExperiment,
     Matrix,
-    GenomicRanges
+    GenomicRanges,
+    S4Vectors
 License: MIT + file LICENSE
 LazyData: TRUE
 Suggests:
