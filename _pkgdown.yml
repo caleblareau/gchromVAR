@@ -1,0 +1,13 @@
+url: http://caleblareau.github.io/gchromVAR
+
+templates:
+  params:
+    bootswatch: flatly
+
+navbar:
+  left:
+  - text: Reference
+    href: reference/index.html
+  - text: GitHub
+    icon: fa-github
+    href: https://github.com/caleblareau/gchromVAR
