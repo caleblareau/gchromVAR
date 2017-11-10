@@ -30,7 +30,7 @@
 #' w_se <- readRDS(rdsA)
 #' 
 #' # Build weights from .bed file
-#' files <- list.files(system.file('extdata',package='chromVARxx'), full.names = TRUE)
+#' files <- list.files(system.file('extdata',package='gchromVAR'), full.names = TRUE)
 #' data(mini_counts, package = "chromVAR")
 #' uk_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
 #'
@@ -91,14 +91,20 @@ cwdc <- function(counts_mat, weights, background_peaks, expectation,
   sample_names <- colnames(counts_mat)
 
   results <- BiocParallel::bplapply(1:dim(weights)[2], function(i){
-      cwds(as.numeric(weights[,i]), counts_mat = counts_mat,
+      gchromVAR:::cwds(as.numeric(weights[,i]), counts_mat = counts_mat,
         background_peaks = background_peaks, expectation = expectation)
   })
 
   z <- t(vapply(results, function(x) x[["z"]], rep(0, ncol(counts_mat))))
   dev <- t(vapply(results, function(x) x[["dev"]], rep(0, ncol(counts_mat))))
-
+  
+  if(dim(z)[1] == 1){
+      z <- t(z)
+      dev <- t(dev)
+  }
+  
   colnames(z) <- colnames(dev) <- sample_names
+  
   out <- SummarizedExperiment(assays = list(deviations = dev, z = z),
                               colData = colData,
                               rowData = rowData)

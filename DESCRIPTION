@@ -1,8 +1,8 @@
 Package: gchromVAR
 Type: Package
 Title: Compute cell-type specific enrichments with high resolution
-Version: 0.2.0
-Date: 2017-1-06
+Version: 0.2.1
+Date: 2017-11-09
 Authors@R: c(
     person("Caleb", "Lareau", email = "caleblareau@g.harvard.edu", role = c("aut", "cre")),
     person("Jacob", "Ulirsch", email = "julirsch@broadinstitute.org", role = c("aut")),
