@@ -10,6 +10,8 @@ navbar:
     href: articles/gchromVAR_vignette.html
   - text: Reference
     href: reference/index.html
+  - text: Maths
+    href: articles/maths.pdf
   - text: GitHub
     icon: fa-github
     href: https://github.com/caleblareau/gchromVAR
