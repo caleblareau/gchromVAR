@@ -30,7 +30,8 @@
 #' w_se <- readRDS(rdsA)
 #' 
 #' # Build weights from .bed file
-#' files <- list.files(system.file('extdata',package='gchromVAR'), full.names = TRUE, pattern = "*.bed$")
+#' files <- list.files(system.file('extdata',package='gchromVAR'),
+#'          full.names = TRUE, pattern = "*.bed$")
 #' data(mini_counts, package = "chromVAR")
 #' uk_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
 #'
@@ -91,7 +92,7 @@ cwdc <- function(counts_mat, weights, background_peaks, expectation,
   sample_names <- colnames(counts_mat)
 
   results <- BiocParallel::bplapply(1:dim(weights)[2], function(i){
-      gchromVAR:::cwds(as.numeric(weights[,i]), counts_mat = counts_mat,
+      cwds(as.numeric(weights[,i]), counts_mat = counts_mat,
         background_peaks = background_peaks, expectation = expectation)
   })
 

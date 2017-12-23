@@ -16,7 +16,7 @@ More stuff here
 
 <br>
 <p align="center">
-  <br><br><br>
+  <br>
   <img src="vignettes/media/overview_Fig1.png" width="80%"/><br>
   <img src="vignettes/media/overview_Fig2.png" width="80%"/><br>
   <b>Figure 2</b>. Schematic and overview of results when applying <b>gchromVAR</b> to bulk populations. 

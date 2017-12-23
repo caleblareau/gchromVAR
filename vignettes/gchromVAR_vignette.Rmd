@@ -7,14 +7,13 @@ output:
     theme: flatly
 ---
 
+## Overview
 
-We created `gchromVAR` is an `R` package for performing enrichment analyses of genome-wide chromatin accessibility data with summary statistics (posterior-probability values) from common-variant associaitons. 
+We implemented **gchromVAR** as an `R` package for performing enrichment analyses of genome-wide chromatin accessibility data with summary statistics (per-variant posterior-probabilities) from common-variant associaitons. 
 
-This vignette covers basic usage of `chromVAR` with standard inputs. For more detailed documentation covering different options for various inputs and additional applications, view the additional vignettes on the [documentation website](https://greenleaflab.github.io/chromVAR/). For more description of the method and applications, please see the [publication](https://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4401.html) 
+This vignette covers the usage of **gchromVAR** with standard processed input data from the hematopoesis interrogation that we've previously described. This package was designed to provide new functionality by generalizing the  [chromVAR](https://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4401.html) framework. Notably, while **chromVAR** requires binary annotations (such as the presence or absence of transcription factor binding motifs), **generalized-** or **genetic-chromVAR** relaxes this assumption and allows for continuous annotations using the `computeWeightedDeviations` function. For more detailed documentation covering different options for various inputs and additional applications of the *chromVAR* package, see the additional vignettes on the [chromVAR documentation website](https://greenleaflab.github.io/chromVAR/). 
 
-##Loading the package
-
-Use library or require to load the package and useful additional packages.
+## Loading the required packages
 
 ```{r, message = FALSE, warning = FALSE}
 library(chromVAR)
@@ -22,6 +21,44 @@ library(gchromVAR)
 library(BuenColors)
 library(SummarizedExperiment)
 library(BiocParallel)
-set.seed(2017)
+set.seed(123)
+register(MulticoreParam(2))
 ```
 
+## Hematopoiesis as a model system
+
+Below is an overview highlighting the cell types with the corresponding colors used throughout this vignette  available through [BuenColors](https://caleblareau.github.io/BuenColors). Under our schematic of the differentation hierarchy, the 16 terminal blood cell traits that we analyzed with common variant associations are shown. After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in **gchromVAR** can be parallelized to the number of available cores on your machine. 
+
+<p align="center">
+  <img src="media/overview_Heme.png" width="40%"/><br>
+  <b>Figure 1</b>. Overview of hematopoesis with cell types (top; note colors) and GWAS traits (bottom) explored thus far with <b>gchromVAR</b>. 
+</p><br><br>
+
+
+Finally, note that the traits are positioned under the hierarchy in accordance with our current understanding of where these cell traits manifest after differentiating. One might hypothesize that the terminal cell types may be the most enriched for those particular traits (e.g. erythroblasts should be enriched for GWAS signal for traits like red blood cell count). One may also expect late-stage progenitors (i.e. the cell types that occur before terminal differentation that may be multi-potent like CMPs or MEPs). With this in mind, we are ready to explore the **gchromVAR** results. 
+
+## Importing GWAS summary statistics
+
+
+## Building a RangedSummarizedExperiment
+For using ATAC-seq or other chromatin accessibility data for **gchromVAR**, we recommend using the [proatac](https://buenrostrolab.com/proatac) pipeline to generate 1 set of consensus, equal-wdith peaks spanning the cellular phenotypes and synthesizing a singular counts table. These data for hematopoesis are already available in the `extdata` of **gchromVAR**. 
+
+```{r, message = FALSE, warning = FALSE}
+library(chromVAR)
+library(gchromVAR)
+library(BuenColors)
+library(SummarizedExperiment)
+library(BiocParallel)
+set.seed(123)
+register(MulticoreParam(2))
+```
+
+
+## Computing weighted deviations
+
+
+## Computing lineage-specific enrichments
+
+
+
+<br><br>

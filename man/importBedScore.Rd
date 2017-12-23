@@ -43,7 +43,8 @@ value per peak if nothing is determined.
 
 \examples{
 
-files <- list.files(system.file('extdata',package='gchromVAR'), full.names = TRUE)
+files <- list.files(system.file('extdata',package='gchromVAR'), pattern = "*.bed$",
+ full.names = TRUE)
 data(mini_counts, package = "chromVAR")
 w_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
 

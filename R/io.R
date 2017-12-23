@@ -27,16 +27,19 @@
 #' @author Caleb Lareau
 #' @examples
 #'
-#' files <- list.files(system.file('extdata',package='gchromVAR'), full.names = TRUE)
+#' files <- list.files(system.file('extdata',package='gchromVAR'), pattern = "*.bed$",
+#'  full.names = TRUE)
 #' data(mini_counts, package = "chromVAR")
 #' w_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
 #' 
 setGeneric("importBedScore",
-   function(ranges, files, colidx = 5, FUN = sum, default.val = 0) standardGeneric("importBedScore"))
+   function(ranges, files, colidx = 5, FUN = sum,
+            default.val = 0) standardGeneric("importBedScore"))
 
 #' @describeIn importBedScore 
 #' @export
-setMethod("importBedScore", c(ranges = "GRanges", files = "character", colidx = "ANY", FUN = "ANY", default.val = "ANY"),
+setMethod("importBedScore", c(ranges = "GRanges", files = "character",
+                              colidx = "ANY", FUN = "ANY", default.val = "ANY"),
           function(ranges, files, colidx = 5, FUN = sum, default.val = 0){
 
   la <- sapply(files, function(file){
