@@ -1,0 +1,27 @@
+---
+title: "gchromVAR User's Guide"
+author: "Caleb Lareau with Jacob Ulirsch and Erik Bao"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_document:
+    theme: flatly
+---
+
+
+We created `gchromVAR` is an `R` package for performing enrichment analyses of genome-wide chromatin accessibility data with summary statistics (posterior-probability values) from common-variant associaitons. 
+
+This vignette covers basic usage of `chromVAR` with standard inputs. For more detailed documentation covering different options for various inputs and additional applications, view the additional vignettes on the [documentation website](https://greenleaflab.github.io/chromVAR/). For more description of the method and applications, please see the [publication](https://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4401.html) 
+
+##Loading the package
+
+Use library or require to load the package and useful additional packages.
+
+```{r, message = FALSE, warning = FALSE}
+library(chromVAR)
+library(gchromVAR)
+library(BuenColors)
+library(SummarizedExperiment)
+library(BiocParallel)
+set.seed(2017)
+```
+

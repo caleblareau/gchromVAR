@@ -6,6 +6,7 @@ templates:
 
 navbar:
   left:
+  - text: Vignettes
   - text: Reference
     href: reference/index.html
   - text: GitHub
