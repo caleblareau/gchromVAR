@@ -66,7 +66,7 @@ BiocParallel::register(BiocParallel::SerialParam())
 # Load very small example counts (already filtered)
 data(mini_counts, package = "chromVAR")
 # Load mini weighted counts
-rdsA<-paste0(system.file('rds',package='chromVARxx'),'/mini_w.rds')
+rdsA<-paste0(system.file('rds',package='gchromVAR'),'/mini_w.rds')
 w_se <- readRDS(rdsA)
 
 # Build weights from .bed file

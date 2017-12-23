@@ -6,7 +6,8 @@ templates:
 
 navbar:
   left:
-  - text: Vignettes
+  - text: Vignette
+    href: articles/gchromVAR_vignette.html
   - text: Reference
     href: reference/index.html
   - text: GitHub
