@@ -30,7 +30,7 @@
 #' w_se <- readRDS(rdsA)
 #' 
 #' # Build weights from .bed file
-#' files <- list.files(system.file('extdata',package='gchromVAR'), full.names = TRUE)
+#' files <- list.files(system.file('extdata',package='gchromVAR'), full.names = TRUE, pattern = "*.bed$")
 #' data(mini_counts, package = "chromVAR")
 #' uk_se <- importBedScore(SummarizedExperiment::rowRanges(mini_counts), files)
 #'

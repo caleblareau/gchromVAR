@@ -164,12 +164,12 @@ weights are in a numeric</p></li>
 <span class='no'>w_se</span> <span class='kw'>&lt;-</span> <span class='fu'>readRDS</span>(<span class='no'>rdsA</span>)
 
 <span class='co'># Build weights from .bed file</span>
-<span class='no'>files</span> <span class='kw'>&lt;-</span> <span class='fu'>list.files</span>(<span class='fu'>system.file</span>(<span class='st'>'extdata'</span>,<span class='kw'>package</span><span class='kw'>=</span><span class='st'>'gchromVAR'</span>), <span class='kw'>full.names</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
+<span class='no'>files</span> <span class='kw'>&lt;-</span> <span class='fu'>list.files</span>(<span class='fu'>system.file</span>(<span class='st'>'extdata'</span>,<span class='kw'>package</span><span class='kw'>=</span><span class='st'>'gchromVAR'</span>), <span class='kw'>full.names</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>pattern</span> <span class='kw'>=</span> <span class='st'>"*.bed$"</span>)
 <span class='fu'>data</span>(<span class='no'>mini_counts</span>, <span class='kw'>package</span> <span class='kw'>=</span> <span class='st'>"chromVAR"</span>)
-<span class='no'>uk_se</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='importBedScore.html'>importBedScore</a></span>(<span class='kw pkg'>SummarizedExperiment</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class'>rowRanges</a></span>(<span class='no'>mini_counts</span>), <span class='no'>files</span>)</div><div class='output co'>#&gt; <span class='error'>Error in read.table(file): no lines available in input</span></div><div class='input'>
+<span class='no'>uk_se</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='importBedScore.html'>importBedScore</a></span>(<span class='kw pkg'>SummarizedExperiment</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class'>rowRanges</a></span>(<span class='no'>mini_counts</span>), <span class='no'>files</span>)
+
 <span class='no'>wdev</span> <span class='kw'>&lt;-</span> <span class='fu'>computeWeightedDeviations</span>(<span class='no'>mini_counts</span>, <span class='no'>w_se</span>)
-<span class='no'>ukdev</span> <span class='kw'>&lt;-</span> <span class='fu'>computeWeightedDeviations</span>(<span class='no'>mini_counts</span>, <span class='no'>uk_se</span>)</div><div class='output co'>#&gt; <span class='error'>Error in computeWeightedDeviations(mini_counts, uk_se): object 'uk_se' not found</span></div><div class='input'>
-</div></pre>
+<span class='no'>ukdev</span> <span class='kw'>&lt;-</span> <span class='fu'>computeWeightedDeviations</span>(<span class='no'>mini_counts</span>, <span class='no'>uk_se</span>)</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
