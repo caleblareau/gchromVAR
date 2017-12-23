@@ -167,7 +167,8 @@ weights are in a numeric</p></li>
 <span class='no'>w_se</span> <span class='kw'>&lt;-</span> <span class='fu'>readRDS</span>(<span class='no'>rdsA</span>)
 
 <span class='co'># Build weights from .bed file</span>
-<span class='no'>files</span> <span class='kw'>&lt;-</span> <span class='fu'>list.files</span>(<span class='fu'>system.file</span>(<span class='st'>'extdata'</span>,<span class='kw'>package</span><span class='kw'>=</span><span class='st'>'gchromVAR'</span>), <span class='kw'>full.names</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>pattern</span> <span class='kw'>=</span> <span class='st'>"*.bed$"</span>)
+<span class='no'>files</span> <span class='kw'>&lt;-</span> <span class='fu'>list.files</span>(<span class='fu'>system.file</span>(<span class='st'>'extdata'</span>,<span class='kw'>package</span><span class='kw'>=</span><span class='st'>'gchromVAR'</span>),
+         <span class='kw'>full.names</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>pattern</span> <span class='kw'>=</span> <span class='st'>"*.bed$"</span>)
 <span class='fu'>data</span>(<span class='no'>mini_counts</span>, <span class='kw'>package</span> <span class='kw'>=</span> <span class='st'>"chromVAR"</span>)
 <span class='no'>uk_se</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='importBedScore.html'>importBedScore</a></span>(<span class='kw pkg'>SummarizedExperiment</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class'>rowRanges</a></span>(<span class='no'>mini_counts</span>), <span class='no'>files</span>)
 

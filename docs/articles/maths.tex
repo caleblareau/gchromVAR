@@ -50,11 +50,12 @@
 
 \usepackage{alltt}
 
-\usepackage[left=0.75in,right=0.75in,bottom=1in,top=1in]{geometry}
+%\VignetteIndexEntry{Math supporting gchromVAR}
+
+\usepackage[left=1in,right=1in,bottom=1in,top=1in]{geometry}
 \usepackage{multicol}
 \usepackage{titling}
 \usepackage{amsmath}
-\setlength{\droptitle}{-5em}
 \posttitle{\par\end{center}}
 \usepackage{natbib}
 \usepackage{graphicx}
@@ -75,7 +76,7 @@
 \begin{document}
 \maketitle
 
-\noindent \textbf{Methods: gchromVAR} \newline
+\section*{gchromVAR}
 The bias-corrected enrichment statistics for $T$ traits and a set of $S$ samples (chromatin cell type profiles) with $P$ peaks computed by \textbf{gchromVAR} is a generalization of the \textbf{chromVAR} algorithm. Specifically, our implementation of \textbf{gchromVAR} relaxes the requirement that previously described$^{1}$ methods enforce where peak annotations be binary, allowing for uncertainty in annotations (such as transcription factor binding or localization of GWAS variants as we show here). Specifically, other implementations, including, \texttt{chromVAR}, implementation requires a binarized matrix $\boldsymbol{M}$ (dimension $P$ by $S$) where $m_{i,k}$ is $1$ if annotation $k$ is present in peak $i$ and $0$ otherwise.$^1$ However, our examination of this assumption for binarized annotations performed poorly for GWAS enrichment applications due in part to the wide-range of uncertainties surrounding association results per-variant (see main text figures). \newline
 
 \noindent Instead, our methodology, \textbf{gchromVAR}, uses a matrix of variant posterior probabilities $\boldsymbol{G}$, where $g_{i,k}$ is the sum of the posterior probabilities of the variants contained in the genomic coordinates of peak $i$ for each trait $k$. Using the matrix of fragment counts in peaks $\boldsymbol{X}$, where $x_{i,j}$ represents the number of accessible reads from peak $i$ in sample $j$, the product $\boldsymbol{X}^T\boldsymbol{G}$ yields the total number of fragments weighted by the causal variant posterior probabilities for $S$ samples (rows) and $T$ traits (columns). To compute a raw weighted accessibility deviation, we compute the expected number of fragments per peak per sample in $\boldsymbol{E}$, where $e_{i,j}$  is computed as the proportion of all fragments mapping to the specific peak multiplied by the total number of fragments in peaks for that cell: 
@@ -100,10 +101,9 @@ $$ y_{j,k}^{(b)} = \frac{\sum_{i=1}^P (\boldsymbol{B}^{(b)}\boldsymbol{X})_{i,k}
 
 $$ z_{j,k} = \frac{y_{j,k} - \mathrm{mean}(y_{j,k}^{(b)})}{\mathrm{sd}(y_{j,k}^{(b)})} $$
 
-\noindent where the mean and variance of $y_{j,k}^{(b)}$ is taken over all values of $b$ $(b \in \{1,2,...,50\})$. Sample-trait p-values can then be computed from the one-tailed normal distribution of these z-scores using the \texttt{pnorm} function in \texttt{R}. Our implementation of \textbf{gchromVAR} utilizes efficient sparse-matrix operations for each step and can compute pairwise trait-cell type enrichments in $1$ minute on a modern laptop computer for these results. \newline\newline\newline
+\noindent where the mean and variance of $y_{j,k}^{(b)}$ is taken over all values of $b$ $(b \in \{1,2,...,50\})$. Sample-trait p-values can then be computed from the one-tailed normal distribution of these z-scores using the \texttt{pnorm} function in \texttt{R}. Our implementation of \textbf{gchromVAR} utilizes efficient sparse-matrix operations for each step and can compute pairwise trait-cell type enrichments in $1$ minute on a modern laptop computer for these results.
 
-\noindent \textbf{References} 
-
+\section*{References}
 \noindent $^1$Schep AN, Wu B, Buenrostro JD, Greenleaf WJ. \textit{Nature Methods.} 2017 Oct 1;14:975. \newline
 
 \end{document}

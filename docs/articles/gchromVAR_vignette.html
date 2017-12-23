@@ -66,18 +66,144 @@
     
     
 <div class="contents">
-<p>We created <code>gchromVAR</code> is an <code>R</code> package for performing enrichment analyses of genome-wide chromatin accessibility data with summary statistics (posterior-probability values) from common-variant associaitons.</p>
-<p>This vignette covers basic usage of <code>chromVAR</code> with standard inputs. For more detailed documentation covering different options for various inputs and additional applications, view the additional vignettes on the <a href="https://greenleaflab.github.io/chromVAR/">documentation website</a>. For more description of the method and applications, please see the <a href="https://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4401.html">publication</a></p>
-<div id="loading-the-package" class="section level2">
+<div id="overview" class="section level2">
 <h2 class="hasAnchor">
-<a href="#loading-the-package" class="anchor"></a>Loading the package</h2>
-<p>Use library or require to load the package and useful additional packages.</p>
+<a href="#overview" class="anchor"></a>Overview</h2>
+<p>We implemented <strong>gchromVAR</strong> as an <code>R</code> package for performing enrichment analyses of genome-wide chromatin accessibility data with summary statistics (per-variant posterior-probabilities) from common-variant associaitons.</p>
+<p>This vignette covers the usage of <strong>gchromVAR</strong> with standard processed input data from the hematopoesis interrogation that we’ve previously described. This package was designed to provide new functionality by generalizing the <a href="https://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4401.html">chromVAR</a> framework. Notably, while <strong>chromVAR</strong> requires binary annotations (such as the presence or absence of transcription factor binding motifs), <strong>generalized-</strong> or <strong>genetic-chromVAR</strong> relaxes this assumption and allows for continuous annotations using the <code>computeWeightedDeviations</code> function. For more detailed documentation covering different options for various inputs and additional applications of the <em>chromVAR</em> package, see the additional vignettes on the <a href="https://greenleaflab.github.io/chromVAR/">chromVAR documentation website</a>.</p>
+</div>
+<div id="loading-the-required-packages" class="section level2">
+<h2 class="hasAnchor">
+<a href="#loading-the-required-packages" class="anchor"></a>Loading the required packages</h2>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(chromVAR)
 <span class="kw">library</span>(gchromVAR)
 <span class="kw">library</span>(BuenColors)
 <span class="kw">library</span>(SummarizedExperiment)
+<span class="kw">library</span>(data.table)
 <span class="kw">library</span>(BiocParallel)
-<span class="kw">set.seed</span>(<span class="dv">2017</span>)</code></pre></div>
+<span class="kw">library</span>(BSgenome.Hsapiens.UCSC.hg19)
+<span class="kw">set.seed</span>(<span class="dv">123</span>)
+<span class="kw"><a href="http://www.rdocumentation.org/packages/BiocParallel/topics/register">register</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/BiocParallel/topics/MulticoreParam-class">MulticoreParam</a></span>(<span class="dv">2</span>))</code></pre></div>
+<p>After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in <strong>gchromVAR</strong> can be parallelized to the number of available cores on your machine. The rest of this vignette will involve using these imported functions and packages</p>
+</div>
+<div id="hematopoiesis-as-a-model-system" class="section level2">
+<h2 class="hasAnchor">
+<a href="#hematopoiesis-as-a-model-system" class="anchor"></a>Hematopoiesis as a model system</h2>
+<p>Below is an overview highlighting the cell types with the corresponding colors used throughout this vignette available through <a href="https://caleblareau.github.io/BuenColors">BuenColors</a>. Under our schematic of the differentation hierarchy, the 16 terminal blood cell traits that we analyzed with common variant associations are shown.</p>
+<p align="center">
+<img src="media/overview_Heme.png" width="40%"><br><b>Figure 1</b>. Overview of hematopoesis with cell types (top; note colors) and GWAS traits (bottom) explored thus far with <b>gchromVAR</b>.
+</p>
+<p><br><br></p>
+<p>Finally, note that the traits are positioned under the hierarchy in accordance with our current understanding of where these cell traits manifest after differentiating. One might hypothesize that the terminal cell types may be the most enriched for those particular traits (e.g. erythroblasts should be enriched for GWAS signal for traits like red blood cell count). One may also expect late-stage progenitors (i.e. the cell types that occur before terminal differentation that may be multi-potent like CMPs or MEPs). With this in mind, we are ready to explore the <strong>gchromVAR</strong> results.</p>
+</div>
+<div id="building-a-rangedsummarizedexperiment" class="section level2">
+<h2 class="hasAnchor">
+<a href="#building-a-rangedsummarizedexperiment" class="anchor"></a>Building a RangedSummarizedExperiment</h2>
+<p>For using ATAC-seq or other chromatin accessibility data for <strong>gchromVAR</strong>, we recommend using the <a href="https://buenrostrolab.com/proatac">proatac</a> pipeline to generate 1 set of consensus, equal-wdith peaks spanning the cellular phenotypes and synthesizing a singular counts table. These data for hematopoesis are already available in the <code>extdata</code> of <strong>gchromVAR</strong>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">countsFile &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">system.file</span>(<span class="st">'extdata/paper'</span>,<span class="dt">package=</span><span class="st">'gchromVAR'</span>), <span class="st">"/hemeCounts.tsv.gz"</span>)
+peaksFile&lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">system.file</span>(<span class="st">'extdata/paper'</span>,<span class="dt">package=</span><span class="st">'gchromVAR'</span>), <span class="st">"/hemePeaks.bed.gz"</span>)
+
+peaksdf &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/data.table/topics/fread">fread</a></span>(<span class="kw">paste0</span>(<span class="st">"zcat &lt; "</span>, peaksFile)))
+peaks &lt;-<span class="st"> </span><span class="kw">makeGRangesFromDataFrame</span>(peaksdf, <span class="dt">seqnames =</span> <span class="st">"V1"</span>, <span class="dt">start.field =</span> <span class="st">"V2"</span>, <span class="dt">end.field =</span> <span class="st">"V3"</span>)
+counts &lt;-<span class="st">  </span><span class="kw">data.matrix</span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/data.table/topics/fread">fread</a></span>(<span class="kw">paste0</span>(<span class="st">"zcat &lt; "</span>, countsFile)))
+SE &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class">SummarizedExperiment</a></span>(<span class="dt">assays =</span> <span class="kw">list</span>(<span class="dt">counts =</span> counts),
+                               <span class="dt">rowData =</span> peaks, 
+                               <span class="dt">colData =</span> <span class="kw">DataFrame</span>(<span class="dt">names =</span> <span class="kw">colnames</span>(counts)))
+SE &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/chromVAR/topics/addGCBias">addGCBias</a></span>(SE, <span class="dt">genome =</span> BSgenome.Hsapiens.UCSC.hg19)</code></pre></div>
+</div>
+<div id="importing-gwas-summary-statistics" class="section level2">
+<h2 class="hasAnchor">
+<a href="#importing-gwas-summary-statistics" class="anchor"></a>Importing GWAS summary statistics</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">files &lt;-<span class="st"> </span><span class="kw">list.files</span>(<span class="kw">system.file</span>(<span class="st">'extdata/paper/PP001'</span>,<span class="dt">package=</span><span class="st">'gchromVAR'</span>),
+                    <span class="dt">full.names =</span> <span class="ot">TRUE</span>, <span class="dt">pattern =</span> <span class="st">"*.bed$"</span>)
+<span class="kw">head</span>(<span class="kw">read.table</span>(files[<span class="dv">1</span>]))</code></pre></div>
+<pre><code>##     V1       V2       V3      V4     V5
+## 1 chr1 25653526 25653527 region1 1.0000
+## 2 chr1 24850597 24850598 region1 0.0242
+## 3 chr1 24722451 24722452 region1 0.0103
+## 4 chr1 24665802 24665803 region1 0.0096
+## 5 chr1 24994340 24994341 region1 0.0096
+## 6 chr1 25095653 25095654 region1 0.0061</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ukbb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/importBedScore.html">importBedScore</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class">rowRanges</a></span>(SE), files, <span class="dt">colidx =</span> <span class="dv">5</span>)</code></pre></div>
+</div>
+<div id="computing-weighted-deviations" class="section level2">
+<h2 class="hasAnchor">
+<a href="#computing-weighted-deviations" class="anchor"></a>Computing weighted deviations</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ukbb_wDEV &lt;-<span class="st"> </span><span class="kw"><a href="../reference/computeWeightedDeviations.html">computeWeightedDeviations</a></span>(SE, ukbb)
+zdf &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/data.table/topics/melt.data.table">melt</a></span>(<span class="kw">t</span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/SummarizedExperiment-class">assays</a></span>(ukbb_wDEV)[[<span class="st">"z"</span>]]))
+zdf[,<span class="dv">2</span>] &lt;-<span class="st"> </span><span class="kw">gsub</span>(<span class="st">"_PP001"</span>, <span class="st">""</span>, zdf[,<span class="dv">2</span>])
+<span class="kw">colnames</span>(zdf) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"ct"</span>, <span class="st">"tr"</span>, <span class="st">"Zscore"</span>)
+<span class="kw">head</span>(zdf)</code></pre></div>
+<pre><code>##    ct         tr      Zscore
+## 1   B BASO_COUNT  0.54028791
+## 2 CD4 BASO_COUNT -0.08351059
+## 3 CD8 BASO_COUNT -0.66325644
+## 4 CLP BASO_COUNT  0.49815087
+## 5 CMP BASO_COUNT  1.70456014
+## 6 Ery BASO_COUNT -0.68111180</code></pre>
+</div>
+<div id="performing-the-lineage-specific-enrichment-test" class="section level2">
+<h2 class="hasAnchor">
+<a href="#performing-the-lineage-specific-enrichment-test" class="anchor"></a>Performing the lineage-specific enrichment test</h2>
+<p>A statistical way of determining how our results faired</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Ery &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"CMP"</span>, <span class="st">"MEP"</span>, <span class="st">"Ery"</span>)
+Meg &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"CMP"</span>, <span class="st">"MEP"</span>, <span class="st">"Mega"</span>)
+Mye &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"CMP"</span>, <span class="st">"LMPP"</span>, <span class="st">"GMP-A"</span>, <span class="st">"GMP-B"</span>, <span class="st">"GMP-C"</span>, <span class="st">"Mono"</span>, <span class="st">"mDC"</span>)
+Lymph &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"LMPP"</span>, <span class="st">"CLP"</span>, <span class="st">"NK"</span>, <span class="st">"pDC"</span>, <span class="st">"CD4"</span>, <span class="st">"CD8"</span>, <span class="st">"B"</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">zdf<span class="op">$</span>LS  &lt;-
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "BASO_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Mye) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "EO_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Mye) <span class="op">+</span><span class="st"> </span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "NEUTRO_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Mye) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "MONO_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Mye) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "WBC_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(Mye, Lymph)) <span class="op">+</span><span class="st"> </span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "LYMPH_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Lymph) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "PLT_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Meg) <span class="op">+</span><span class="st"> </span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "MPV"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Meg) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "MEAN_RETIC_VOL"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span><span class="st"> </span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "HGB"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "HCT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "MCH"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "MCV"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "MCHC"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "RBC_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
+<span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "RETIC_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">zdf<span class="op">$</span>gchromVAR_pvalue &lt;-<span class="st"> </span><span class="kw">pnorm</span>(zdf<span class="op">$</span>Zscore, <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>)
+gchromVAR_ranksum &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">dim</span>(zdf)[<span class="dv">1</span>]<span class="op">*</span>zdf[<span class="kw"><a href="http://www.rdocumentation.org/packages/data.table/topics/setorder">order</a></span>(zdf<span class="op">$</span>gchromVAR_pvalue, <span class="dt">decreasing =</span> <span class="ot">FALSE</span>), <span class="st">"LS"</span>])
+permuted &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">10000</span>, <span class="cf">function</span>(i) <span class="kw">sum</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">dim</span>(zdf)[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">sample</span>(zdf<span class="op">$</span>LS, <span class="kw">length</span>(zdf<span class="op">$</span>LS))))
+<span class="kw">pnorm</span>((<span class="kw">mean</span>(permuted) <span class="op">-</span><span class="st"> </span>gchromVAR_ranksum)<span class="op">/</span><span class="kw">sd</span>(permuted), <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<pre><code>## [1] 5.075067e-15</code></pre>
+</div>
+<div id="extracting-individual-enrichments" class="section level2">
+<h2 class="hasAnchor">
+<a href="#extracting-individual-enrichments" class="anchor"></a>Extracting Individual Enrichments</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">zdf[zdf<span class="op">$</span>gchromVAR_pvalue <span class="op">&lt;</span><span class="st"> </span><span class="fl">0.05</span><span class="op">/</span><span class="dv">288</span> , ]</code></pre></div>
+<pre><code>##        ct             tr    Zscore LS gchromVAR_pvalue
+## 74    CD4    LYMPH_COUNT  4.199441  1     1.337873e-05
+## 75    CD8    LYMPH_COUNT  4.803311  1     7.803174e-07
+## 95    CMP            MCH  4.001357  1     3.149017e-05
+## 96    Ery            MCH 13.612421  1     1.689314e-42
+## 104   MEP            MCH  9.753007  1     8.954164e-23
+## 114   Ery           MCHC  7.839812  1     2.256098e-15
+## 122   MEP           MCHC  4.569496  1     2.444496e-06
+## 132   Ery            MCV 15.538675  1     9.493371e-55
+## 140   MEP            MCV  7.944465  1     9.751538e-16
+## 150   Ery MEAN_RETIC_VOL 15.786382  1     1.930484e-56
+## 158   MEP MEAN_RETIC_VOL  8.691358  1     1.790667e-18
+## 169 GMP-A     MONO_COUNT  5.206497  1     9.621961e-08
+## 170 GMP-B     MONO_COUNT  4.209538  1     1.279465e-05
+## 177  Mono     MONO_COUNT  4.755962  1     9.875178e-07
+## 185   CMP            MPV  3.753410  1     8.722274e-05
+## 193  Mega            MPV  5.750519  1     4.448507e-09
+## 194   MEP            MPV  4.013335  1     2.993347e-05
+## 221   CMP      PLT_COUNT  4.515496  1     3.158444e-06
+## 222   Ery      PLT_COUNT  4.606007  0     2.052373e-06
+## 229  Mega      PLT_COUNT  3.834510  1     6.290746e-05
+## 230   MEP      PLT_COUNT  4.981455  1     3.155391e-07
+## 240   Ery      RBC_COUNT  8.749975  1     1.066998e-18
+## 248   MEP      RBC_COUNT  6.477772  1     4.654340e-11
+## 258   Ery    RETIC_COUNT  8.634427  1     2.951099e-18
+## 266   MEP    RETIC_COUNT  4.256826  1     1.036750e-05</code></pre>
+<p><br><br></p>
 </div>
 </div>
   </div>
@@ -87,7 +213,14 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#loading-the-package">Loading the package</a></li>
+<li><a href="#overview">Overview</a></li>
+      <li><a href="#loading-the-required-packages">Loading the required packages</a></li>
+      <li><a href="#hematopoiesis-as-a-model-system">Hematopoiesis as a model system</a></li>
+      <li><a href="#building-a-rangedsummarizedexperiment">Building a RangedSummarizedExperiment</a></li>
+      <li><a href="#importing-gwas-summary-statistics">Importing GWAS summary statistics</a></li>
+      <li><a href="#computing-weighted-deviations">Computing weighted deviations</a></li>
+      <li><a href="#performing-the-lineage-specific-enrichment-test">Performing the lineage-specific enrichment test</a></li>
+      <li><a href="#extracting-individual-enrichments">Extracting Individual Enrichments</a></li>
       </ul>
 </div>
       </div>

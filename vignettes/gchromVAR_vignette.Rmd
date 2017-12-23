@@ -20,45 +20,109 @@ library(chromVAR)
 library(gchromVAR)
 library(BuenColors)
 library(SummarizedExperiment)
+library(data.table)
 library(BiocParallel)
+library(BSgenome.Hsapiens.UCSC.hg19)
 set.seed(123)
 register(MulticoreParam(2))
 ```
 
+After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in **gchromVAR** can be parallelized to the number of available cores on your machine. The rest of this vignette will involve using these imported functions and packages
+
 ## Hematopoiesis as a model system
 
-Below is an overview highlighting the cell types with the corresponding colors used throughout this vignette  available through [BuenColors](https://caleblareau.github.io/BuenColors). Under our schematic of the differentation hierarchy, the 16 terminal blood cell traits that we analyzed with common variant associations are shown. After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in **gchromVAR** can be parallelized to the number of available cores on your machine. 
+Below is an overview highlighting the cell types with the corresponding colors used throughout this vignette  available through [BuenColors](https://caleblareau.github.io/BuenColors). Under our schematic of the differentation hierarchy, the 16 terminal blood cell traits that we analyzed with common variant associations are shown.
 
 <p align="center">
   <img src="media/overview_Heme.png" width="40%"/><br>
   <b>Figure 1</b>. Overview of hematopoesis with cell types (top; note colors) and GWAS traits (bottom) explored thus far with <b>gchromVAR</b>. 
 </p><br><br>
 
-
 Finally, note that the traits are positioned under the hierarchy in accordance with our current understanding of where these cell traits manifest after differentiating. One might hypothesize that the terminal cell types may be the most enriched for those particular traits (e.g. erythroblasts should be enriched for GWAS signal for traits like red blood cell count). One may also expect late-stage progenitors (i.e. the cell types that occur before terminal differentation that may be multi-potent like CMPs or MEPs). With this in mind, we are ready to explore the **gchromVAR** results. 
-
-## Importing GWAS summary statistics
 
 
 ## Building a RangedSummarizedExperiment
 For using ATAC-seq or other chromatin accessibility data for **gchromVAR**, we recommend using the [proatac](https://buenrostrolab.com/proatac) pipeline to generate 1 set of consensus, equal-wdith peaks spanning the cellular phenotypes and synthesizing a singular counts table. These data for hematopoesis are already available in the `extdata` of **gchromVAR**. 
 
 ```{r, message = FALSE, warning = FALSE}
-library(chromVAR)
-library(gchromVAR)
-library(BuenColors)
-library(SummarizedExperiment)
-library(BiocParallel)
-set.seed(123)
-register(MulticoreParam(2))
+countsFile <- paste0(system.file('extdata/paper',package='gchromVAR'), "/hemeCounts.tsv.gz")
+peaksFile<- paste0(system.file('extdata/paper',package='gchromVAR'), "/hemePeaks.bed.gz")
+
+peaksdf <- data.frame(fread(paste0("zcat < ", peaksFile)))
+peaks <- makeGRangesFromDataFrame(peaksdf, seqnames = "V1", start.field = "V2", end.field = "V3")
+counts <-  data.matrix(fread(paste0("zcat < ", countsFile)))
+SE <- SummarizedExperiment(assays = list(counts = counts),
+                               rowData = peaks, 
+                               colData = DataFrame(names = colnames(counts)))
+SE <- addGCBias(SE, genome = BSgenome.Hsapiens.UCSC.hg19)
 ```
 
 
+
+## Importing GWAS summary statistics
+
+```{r, message = FALSE, warning = FALSE}
+files <- list.files(system.file('extdata/paper/PP001',package='gchromVAR'),
+                    full.names = TRUE, pattern = "*.bed$")
+head(read.table(files[1]))
+ukbb <- importBedScore(rowRanges(SE), files, colidx = 5)
+
+```
+
 ## Computing weighted deviations
 
+```{r, message = FALSE, warning = FALSE, cache = TRUE}
+ukbb_wDEV <- computeWeightedDeviations(SE, ukbb)
+zdf <- melt(t(assays(ukbb_wDEV)[["z"]]))
+zdf[,2] <- gsub("_PP001", "", zdf[,2])
+colnames(zdf) <- c("ct", "tr", "Zscore")
+head(zdf)
+```
 
-## Computing lineage-specific enrichments
+## Performing the lineage-specific enrichment test
+
+A statistical way of determining how our results faired  
+
+```{r, message = FALSE, warning = FALSE, cache = TRUE}
+Ery <- c("HSC", "MPP", "CMP", "MEP", "Ery")
+Meg <- c("HSC", "MPP", "CMP", "MEP", "Mega")
+Mye <- c("HSC", "MPP", "CMP", "LMPP", "GMP-A", "GMP-B", "GMP-C", "Mono", "mDC")
+Lymph <- c("HSC", "MPP", "LMPP", "CLP", "NK", "pDC", "CD4", "CD8", "B")
+```
 
 
+```{r, message = FALSE, warning = FALSE, cache = TRUE}
+zdf$LS  <-
+    (zdf$tr == "BASO_COUNT" & zdf$ct %in% Mye) +
+    (zdf$tr == "EO_COUNT" & zdf$ct %in% Mye) + 
+    (zdf$tr == "NEUTRO_COUNT" & zdf$ct %in% Mye) +
+    (zdf$tr == "MONO_COUNT" & zdf$ct %in% Mye) +
+    (zdf$tr == "WBC_COUNT" & zdf$ct %in% c(Mye, Lymph)) + 
+    (zdf$tr == "LYMPH_COUNT" & zdf$ct %in% Lymph) +
+    (zdf$tr == "PLT_COUNT" & zdf$ct %in% Meg) + 
+    (zdf$tr == "MPV" & zdf$ct %in% Meg) +
+    (zdf$tr == "MEAN_RETIC_VOL" & zdf$ct %in% Ery) + 
+    (zdf$tr == "HGB" & zdf$ct %in% Ery) +
+    (zdf$tr == "HCT" & zdf$ct %in% Ery) +
+    (zdf$tr == "MCH" & zdf$ct %in% Ery) +
+    (zdf$tr == "MCV" & zdf$ct %in% Ery) +
+    (zdf$tr == "MCHC" & zdf$ct %in% Ery) +
+    (zdf$tr == "RBC_COUNT" & zdf$ct %in% Ery) +
+    (zdf$tr == "RETIC_COUNT" & zdf$ct %in% Ery)
+```
+
+```{r, message = FALSE, warning = FALSE, cache = TRUE}
+zdf$gchromVAR_pvalue <- pnorm(zdf$Zscore, lower.tail = FALSE)
+gchromVAR_ranksum <- sum(1:dim(zdf)[1]*zdf[order(zdf$gchromVAR_pvalue, decreasing = FALSE), "LS"])
+permuted <- sapply(1:10000, function(i) sum(1:dim(zdf)[1] * sample(zdf$LS, length(zdf$LS))))
+pnorm((mean(permuted) - gchromVAR_ranksum)/sd(permuted), lower.tail = FALSE)
+```
+
+## Extracting Individual Enrichments
+
+```{r, message = FALSE, warning = FALSE, cache = TRUE}
+zdf[zdf$gchromVAR_pvalue < 0.05/288 , ]
+
+```
 
 <br><br>
