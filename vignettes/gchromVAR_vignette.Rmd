@@ -27,7 +27,7 @@ set.seed(123)
 register(MulticoreParam(2))
 ```
 
-After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in **gchromVAR** can be parallelized to the number of available cores on your machine. The rest of this vignette will involve using these imported functions and packages
+After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in **gchromVAR** can be parallelized to the number of available cores on your machine. The rest of this vignette will involve using these imported functions and packages to score GWAS enrichments for 16 traits in 18 cell types. 
 
 ## Hematopoiesis as a model system
 
@@ -38,11 +38,11 @@ Below is an overview highlighting the cell types with the corresponding colors u
   <b>Figure 1</b>. Overview of hematopoesis with cell types (top; note colors) and GWAS traits (bottom) explored thus far with <b>gchromVAR</b>. 
 </p><br><br>
 
-Finally, note that the traits are positioned under the hierarchy in accordance with our current understanding of where these cell traits manifest after differentiating. One might hypothesize that the terminal cell types may be the most enriched for those particular traits (e.g. erythroblasts should be enriched for GWAS signal for traits like red blood cell count). One may also expect late-stage progenitors (i.e. the cell types that occur before terminal differentation that may be multi-potent like CMPs or MEPs). With this in mind, we are ready to explore the **gchromVAR** results. 
+Also, note that the traits are positioned under the hierarchy in accordance with our current understanding of where these cell traits manifest after differentiating. One might hypothesize that the terminal cell types may be the most enriched for those particular traits (e.g. erythroblasts should be enriched for GWAS signal for traits like red blood cell count). One may also expect late-stage progenitors (i.e. the cell types that occur before terminal differentation that may be multi-potent like CMPs or MEPs). With this in mind, we are ready to explore the **gchromVAR** results. 
 
 
 ## Building a RangedSummarizedExperiment
-For using ATAC-seq or other chromatin accessibility data for **gchromVAR**, we recommend using the [proatac](https://buenrostrolab.com/proatac) pipeline to generate 1 set of consensus, equal-wdith peaks spanning the cellular phenotypes and synthesizing a singular counts table. These data for hematopoesis are already available in the `extdata` of **gchromVAR**. 
+For using ATAC-seq or other chromatin accessibility data for **gchromVAR**, we recommend using the [proatac](https://buenrostrolab.com/proatac) pipeline to generate 1 set of consensus, equal-wdith peaks spanning the cellular phenotypes and synthesizing a singular counts table. These data for hematopoesis are already available in the `extdata` of **gchromVAR**. The format of the quantitative chromatin data for the key functionality is a [RangedSummarizedExperiment](https://bioconductor.org/packages/3.7/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html), which we construct using the counts matrix and peak definitions. The last line of code also adds the GC content per peak, which is used in the background model. 
 
 ```{r, message = FALSE, warning = FALSE}
 countsFile <- paste0(system.file('extdata/paper',package='gchromVAR'), "/hemeCounts.tsv.gz")
@@ -58,30 +58,37 @@ SE <- addGCBias(SE, genome = BSgenome.Hsapiens.UCSC.hg19)
 ```
 
 
-
 ## Importing GWAS summary statistics
+
+Next, we want to overlap the GWAS summary statistics with our accessibility peaks. To facilitate this, we've created the `importBedScore` function, which will iteratively build another [RangedSummarizedExperiment](https://bioconductor.org/packages/3.7/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html) where the same peaks define the row space and the columns are defined as various GWAS annotations. The counts are quantitative measures of the total fine-mapped posterior probabilities of the variants overlapping those peaks. 
 
 ```{r, message = FALSE, warning = FALSE}
 files <- list.files(system.file('extdata/paper/PP001',package='gchromVAR'),
                     full.names = TRUE, pattern = "*.bed$")
 head(read.table(files[1]))
 ukbb <- importBedScore(rowRanges(SE), files, colidx = 5)
-
+str(ukbb)
 ```
+
+With these two `RSE` objects created (`SE` for chromatin counts and `ukbb` for GWAS data), we can now run the core **gchromVAR** function, `computeWeightedDeviations`. 
 
 ## Computing weighted deviations
 
+The functional execution having followed the previous steps is straight forward--
+
 ```{r, message = FALSE, warning = FALSE, cache = TRUE}
 ukbb_wDEV <- computeWeightedDeviations(SE, ukbb)
-zdf <- melt(t(assays(ukbb_wDEV)[["z"]]))
+zdf <- reshape2::melt(t(assays(ukbb_wDEV)[["z"]]))
 zdf[,2] <- gsub("_PP001", "", zdf[,2])
 colnames(zdf) <- c("ct", "tr", "Zscore")
 head(zdf)
 ```
 
+The later steps just show re-formatted output for convenience. The last table, `zdf` provides a data frame of the Cell type (`ct`), trait (`tr`) and enrichment z-score for each of the 16x18 combinations. 
+
 ## Performing the lineage-specific enrichment test
 
-A statistical way of determining how our results faired  
+A statistical way of determining how our results faired is to determine the relative positioning of lineage-specific enrichments. For each trait, we define the appropriate set of lineage-specific tissues (from Figure 1), and then annotate the results data frame. First, we define the four major lineages in hematopoesis:
 
 ```{r, message = FALSE, warning = FALSE, cache = TRUE}
 Ery <- c("HSC", "MPP", "CMP", "MEP", "Ery")
@@ -90,6 +97,7 @@ Mye <- c("HSC", "MPP", "CMP", "LMPP", "GMP-A", "GMP-B", "GMP-C", "Mono", "mDC")
 Lymph <- c("HSC", "MPP", "LMPP", "CLP", "NK", "pDC", "CD4", "CD8", "B")
 ```
 
+Next, we annotate the data frame work lineage-specific ("LS") enrichments:
 
 ```{r, message = FALSE, warning = FALSE, cache = TRUE}
 zdf$LS  <-
@@ -111,6 +119,8 @@ zdf$LS  <-
     (zdf$tr == "RETIC_COUNT" & zdf$ct %in% Ery)
 ```
 
+Finally, we can compute a Mann-Whitney Rank-sum statistic to determine the relative enrichment of the **gchromVAR** results compared to the non-lineage specific measures:
+
 ```{r, message = FALSE, warning = FALSE, cache = TRUE}
 zdf$gchromVAR_pvalue <- pnorm(zdf$Zscore, lower.tail = FALSE)
 gchromVAR_ranksum <- sum(1:dim(zdf)[1]*zdf[order(zdf$gchromVAR_pvalue, decreasing = FALSE), "LS"])
@@ -118,7 +128,11 @@ permuted <- sapply(1:10000, function(i) sum(1:dim(zdf)[1] * sample(zdf$LS, lengt
 pnorm((mean(permuted) - gchromVAR_ranksum)/sd(permuted), lower.tail = FALSE)
 ```
 
+From this statistic, we can see that lineage-specific enrichments for much stronger for **gchromVAR** than we'd expect by chance. We quantified this for several related methods on the initial landing page, demonstrating the utility of our approach. 
+
 ## Extracting Individual Enrichments
+
+Finally, we can do a simple Bonferonni-correction threshold to see that nearly all of the enrichments from **gchromVAR** are lineage specific. Moverover, these enrichments corroborate known biology in hematopoesis. 
 
 ```{r, message = FALSE, warning = FALSE, cache = TRUE}
 zdf[zdf$gchromVAR_pvalue < 0.05/288 , ]

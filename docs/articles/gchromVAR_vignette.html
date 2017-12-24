@@ -60,7 +60,7 @@
       <h1>gchromVAR User’s Guide</h1>
                         <h4 class="author">Caleb Lareau with Jacob Ulirsch and Erik Bao</h4>
             
-            <h4 class="date">2017-12-23</h4>
+            <h4 class="date">2017-12-24</h4>
           </div>
 
     
@@ -84,7 +84,7 @@
 <span class="kw">library</span>(BSgenome.Hsapiens.UCSC.hg19)
 <span class="kw">set.seed</span>(<span class="dv">123</span>)
 <span class="kw"><a href="http://www.rdocumentation.org/packages/BiocParallel/topics/register">register</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/BiocParallel/topics/MulticoreParam-class">MulticoreParam</a></span>(<span class="dv">2</span>))</code></pre></div>
-<p>After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in <strong>gchromVAR</strong> can be parallelized to the number of available cores on your machine. The rest of this vignette will involve using these imported functions and packages</p>
+<p>After loading the required packages as shown in the preceding code chunk, note also that the time-consuming functionality in <strong>gchromVAR</strong> can be parallelized to the number of available cores on your machine. The rest of this vignette will involve using these imported functions and packages to score GWAS enrichments for 16 traits in 18 cell types.</p>
 </div>
 <div id="hematopoiesis-as-a-model-system" class="section level2">
 <h2 class="hasAnchor">
@@ -94,12 +94,12 @@
 <img src="media/overview_Heme.png" width="40%"><br><b>Figure 1</b>. Overview of hematopoesis with cell types (top; note colors) and GWAS traits (bottom) explored thus far with <b>gchromVAR</b>.
 </p>
 <p><br><br></p>
-<p>Finally, note that the traits are positioned under the hierarchy in accordance with our current understanding of where these cell traits manifest after differentiating. One might hypothesize that the terminal cell types may be the most enriched for those particular traits (e.g. erythroblasts should be enriched for GWAS signal for traits like red blood cell count). One may also expect late-stage progenitors (i.e. the cell types that occur before terminal differentation that may be multi-potent like CMPs or MEPs). With this in mind, we are ready to explore the <strong>gchromVAR</strong> results.</p>
+<p>Also, note that the traits are positioned under the hierarchy in accordance with our current understanding of where these cell traits manifest after differentiating. One might hypothesize that the terminal cell types may be the most enriched for those particular traits (e.g. erythroblasts should be enriched for GWAS signal for traits like red blood cell count). One may also expect late-stage progenitors (i.e. the cell types that occur before terminal differentation that may be multi-potent like CMPs or MEPs). With this in mind, we are ready to explore the <strong>gchromVAR</strong> results.</p>
 </div>
 <div id="building-a-rangedsummarizedexperiment" class="section level2">
 <h2 class="hasAnchor">
 <a href="#building-a-rangedsummarizedexperiment" class="anchor"></a>Building a RangedSummarizedExperiment</h2>
-<p>For using ATAC-seq or other chromatin accessibility data for <strong>gchromVAR</strong>, we recommend using the <a href="https://buenrostrolab.com/proatac">proatac</a> pipeline to generate 1 set of consensus, equal-wdith peaks spanning the cellular phenotypes and synthesizing a singular counts table. These data for hematopoesis are already available in the <code>extdata</code> of <strong>gchromVAR</strong>.</p>
+<p>For using ATAC-seq or other chromatin accessibility data for <strong>gchromVAR</strong>, we recommend using the <a href="https://buenrostrolab.com/proatac">proatac</a> pipeline to generate 1 set of consensus, equal-wdith peaks spanning the cellular phenotypes and synthesizing a singular counts table. These data for hematopoesis are already available in the <code>extdata</code> of <strong>gchromVAR</strong>. The format of the quantitative chromatin data for the key functionality is a <a href="https://bioconductor.org/packages/3.7/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html">RangedSummarizedExperiment</a>, which we construct using the counts matrix and peak definitions. The last line of code also adds the GC content per peak, which is used in the background model.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">countsFile &lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">system.file</span>(<span class="st">'extdata/paper'</span>,<span class="dt">package=</span><span class="st">'gchromVAR'</span>), <span class="st">"/hemeCounts.tsv.gz"</span>)
 peaksFile&lt;-<span class="st"> </span><span class="kw">paste0</span>(<span class="kw">system.file</span>(<span class="st">'extdata/paper'</span>,<span class="dt">package=</span><span class="st">'gchromVAR'</span>), <span class="st">"/hemePeaks.bed.gz"</span>)
 
@@ -114,6 +114,7 @@ SE &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumenta
 <div id="importing-gwas-summary-statistics" class="section level2">
 <h2 class="hasAnchor">
 <a href="#importing-gwas-summary-statistics" class="anchor"></a>Importing GWAS summary statistics</h2>
+<p>Next, we want to overlap the GWAS summary statistics with our accessibility peaks. To facilitate this, we’ve created the <code>importBedScore</code> function, which will iteratively build another <a href="https://bioconductor.org/packages/3.7/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html">RangedSummarizedExperiment</a> where the same peaks define the row space and the columns are defined as various GWAS annotations. The counts are quantitative measures of the total fine-mapped posterior probabilities of the variants overlapping those peaks.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">files &lt;-<span class="st"> </span><span class="kw">list.files</span>(<span class="kw">system.file</span>(<span class="st">'extdata/paper/PP001'</span>,<span class="dt">package=</span><span class="st">'gchromVAR'</span>),
                     <span class="dt">full.names =</span> <span class="ot">TRUE</span>, <span class="dt">pattern =</span> <span class="st">"*.bed$"</span>)
 <span class="kw">head</span>(<span class="kw">read.table</span>(files[<span class="dv">1</span>]))</code></pre></div>
@@ -124,13 +125,69 @@ SE &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumenta
 ## 4 chr1 24665802 24665803 region1 0.0096
 ## 5 chr1 24994340 24994341 region1 0.0096
 ## 6 chr1 25095653 25095654 region1 0.0061</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ukbb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/importBedScore.html">importBedScore</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class">rowRanges</a></span>(SE), files, <span class="dt">colidx =</span> <span class="dv">5</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ukbb &lt;-<span class="st"> </span><span class="kw"><a href="../reference/importBedScore.html">importBedScore</a></span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/RangedSummarizedExperiment-class">rowRanges</a></span>(SE), files, <span class="dt">colidx =</span> <span class="dv">5</span>)
+<span class="kw">str</span>(ukbb)</code></pre></div>
+<pre><code>## Formal class 'RangedSummarizedExperiment' [package "SummarizedExperiment"] with 6 slots
+##   ..@ rowRanges      :Formal class 'GRanges' [package "GenomicRanges"] with 6 slots
+##   .. .. ..@ seqnames       :Formal class 'Rle' [package "S4Vectors"] with 4 slots
+##   .. .. .. .. ..@ values         : Factor w/ 23 levels "chr1","chr2",..: 1 2 3 4 5 6 7 8 9 10 ...
+##   .. .. .. .. ..@ lengths        : int [1:23] 39165 40692 33479 26870 27811 29215 26134 23199 18351 21123 ...
+##   .. .. .. .. ..@ elementMetadata: NULL
+##   .. .. .. .. ..@ metadata       : list()
+##   .. .. ..@ ranges         :Formal class 'IRanges' [package "IRanges"] with 6 slots
+##   .. .. .. .. ..@ start          : int [1:451283] 10290 13252 16019 29020 96387 115440 237507 240798 521355 540679 ...
+##   .. .. .. .. ..@ width          : int [1:451283] 501 501 501 501 501 501 501 501 501 501 ...
+##   .. .. .. .. ..@ NAMES          : NULL
+##   .. .. .. .. ..@ elementType    : chr "integer"
+##   .. .. .. .. ..@ elementMetadata: NULL
+##   .. .. .. .. ..@ metadata       : list()
+##   .. .. ..@ strand         :Formal class 'Rle' [package "S4Vectors"] with 4 slots
+##   .. .. .. .. ..@ values         : Factor w/ 3 levels "+","-","*": 3
+##   .. .. .. .. ..@ lengths        : int 451283
+##   .. .. .. .. ..@ elementMetadata: NULL
+##   .. .. .. .. ..@ metadata       : list()
+##   .. .. ..@ elementMetadata:Formal class 'DataFrame' [package "S4Vectors"] with 6 slots
+##   .. .. .. .. ..@ rownames       : NULL
+##   .. .. .. .. ..@ nrows          : int 451283
+##   .. .. .. .. ..@ listData       :List of 1
+##   .. .. .. .. .. ..$ bias: num [1:451283] 0.689 0.575 0.513 0.778 0.453 ...
+##   .. .. .. .. ..@ elementType    : chr "ANY"
+##   .. .. .. .. ..@ elementMetadata: NULL
+##   .. .. .. .. ..@ metadata       : list()
+##   .. .. ..@ seqinfo        :Formal class 'Seqinfo' [package "GenomeInfoDb"] with 4 slots
+##   .. .. .. .. ..@ seqnames   : chr [1:23] "chr1" "chr2" "chr3" "chr4" ...
+##   .. .. .. .. ..@ seqlengths : int [1:23] NA NA NA NA NA NA NA NA NA NA ...
+##   .. .. .. .. ..@ is_circular: logi [1:23] NA NA NA NA NA NA ...
+##   .. .. .. .. ..@ genome     : chr [1:23] NA NA NA NA ...
+##   .. .. ..@ metadata       : list()
+##   ..@ colData        :Formal class 'DataFrame' [package "S4Vectors"] with 6 slots
+##   .. .. ..@ rownames       : chr [1:16] "BASO_COUNT_PP001" "EO_COUNT_PP001" "HCT_PP001" "HGB_PP001" ...
+##   .. .. ..@ nrows          : int 16
+##   .. .. ..@ listData       :List of 1
+##   .. .. .. ..$ file: chr [1:16] "BASO_COUNT_PP001" "EO_COUNT_PP001" "HCT_PP001" "HGB_PP001" ...
+##   .. .. ..@ elementType    : chr "ANY"
+##   .. .. ..@ elementMetadata: NULL
+##   .. .. ..@ metadata       : list()
+##   ..@ assays         :Reference class 'ShallowSimpleListAssays' [package "SummarizedExperiment"] with 1 field
+##   .. ..$ data: NULL
+##   .. ..and 14 methods.
+##   ..@ NAMES          : NULL
+##   ..@ elementMetadata:Formal class 'DataFrame' [package "S4Vectors"] with 6 slots
+##   .. .. ..@ rownames       : NULL
+##   .. .. ..@ nrows          : int 451283
+##   .. .. ..@ listData       : Named list()
+##   .. .. ..@ elementType    : chr "ANY"
+##   .. .. ..@ elementMetadata: NULL
+##   .. .. ..@ metadata       : list()
+##   ..@ metadata       : list()</code></pre>
+<p>With these two <code>RSE</code> objects created (<code>SE</code> for chromatin counts and <code>ukbb</code> for GWAS data), we can now run the core <strong>gchromVAR</strong> function, <code>computeWeightedDeviations</code>.</p>
 </div>
 <div id="computing-weighted-deviations" class="section level2">
 <h2 class="hasAnchor">
 <a href="#computing-weighted-deviations" class="anchor"></a>Computing weighted deviations</h2>
+<p>The functional execution having followed the previous steps is straight forward–</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">ukbb_wDEV &lt;-<span class="st"> </span><span class="kw"><a href="../reference/computeWeightedDeviations.html">computeWeightedDeviations</a></span>(SE, ukbb)
-zdf &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/data.table/topics/melt.data.table">melt</a></span>(<span class="kw">t</span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/SummarizedExperiment-class">assays</a></span>(ukbb_wDEV)[[<span class="st">"z"</span>]]))
+zdf &lt;-<span class="st"> </span>reshape2<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/reshape2/topics/melt">melt</a></span>(<span class="kw">t</span>(<span class="kw"><a href="http://www.rdocumentation.org/packages/SummarizedExperiment/topics/SummarizedExperiment-class">assays</a></span>(ukbb_wDEV)[[<span class="st">"z"</span>]]))
 zdf[,<span class="dv">2</span>] &lt;-<span class="st"> </span><span class="kw">gsub</span>(<span class="st">"_PP001"</span>, <span class="st">""</span>, zdf[,<span class="dv">2</span>])
 <span class="kw">colnames</span>(zdf) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"ct"</span>, <span class="st">"tr"</span>, <span class="st">"Zscore"</span>)
 <span class="kw">head</span>(zdf)</code></pre></div>
@@ -141,15 +198,17 @@ zdf[,<span class="dv">2</span>] &lt;-<span class="st"> </span><span class="kw">g
 ## 4 CLP BASO_COUNT  0.49815087
 ## 5 CMP BASO_COUNT  1.70456014
 ## 6 Ery BASO_COUNT -0.68111180</code></pre>
+<p>The later steps just show re-formatted output for convenience. The last table, <code>zdf</code> provides a data frame of the Cell type (<code>ct</code>), trait (<code>tr</code>) and enrichment z-score for each of the 16x18 combinations.</p>
 </div>
 <div id="performing-the-lineage-specific-enrichment-test" class="section level2">
 <h2 class="hasAnchor">
 <a href="#performing-the-lineage-specific-enrichment-test" class="anchor"></a>Performing the lineage-specific enrichment test</h2>
-<p>A statistical way of determining how our results faired</p>
+<p>A statistical way of determining how our results faired is to determine the relative positioning of lineage-specific enrichments. For each trait, we define the appropriate set of lineage-specific tissues (from Figure 1), and then annotate the results data frame. First, we define the four major lineages in hematopoesis:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">Ery &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"CMP"</span>, <span class="st">"MEP"</span>, <span class="st">"Ery"</span>)
 Meg &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"CMP"</span>, <span class="st">"MEP"</span>, <span class="st">"Mega"</span>)
 Mye &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"CMP"</span>, <span class="st">"LMPP"</span>, <span class="st">"GMP-A"</span>, <span class="st">"GMP-B"</span>, <span class="st">"GMP-C"</span>, <span class="st">"Mono"</span>, <span class="st">"mDC"</span>)
 Lymph &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"HSC"</span>, <span class="st">"MPP"</span>, <span class="st">"LMPP"</span>, <span class="st">"CLP"</span>, <span class="st">"NK"</span>, <span class="st">"pDC"</span>, <span class="st">"CD4"</span>, <span class="st">"CD8"</span>, <span class="st">"B"</span>)</code></pre></div>
+<p>Next, we annotate the data frame work lineage-specific (“LS”) enrichments:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">zdf<span class="op">$</span>LS  &lt;-
 <span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "BASO_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Mye) <span class="op">+</span>
 <span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "EO_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Mye) <span class="op">+</span><span class="st"> </span>
@@ -167,15 +226,18 @@ Lymph &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">"
 <span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "MCHC"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
 <span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "RBC_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery) <span class="op">+</span>
 <span class="st">    </span>(zdf<span class="op">$</span>tr <span class="op">==</span><span class="st"> "RETIC_COUNT"</span> <span class="op">&amp;</span><span class="st"> </span>zdf<span class="op">$</span>ct <span class="op">%in%</span><span class="st"> </span>Ery)</code></pre></div>
+<p>Finally, we can compute a Mann-Whitney Rank-sum statistic to determine the relative enrichment of the <strong>gchromVAR</strong> results compared to the non-lineage specific measures:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">zdf<span class="op">$</span>gchromVAR_pvalue &lt;-<span class="st"> </span><span class="kw">pnorm</span>(zdf<span class="op">$</span>Zscore, <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>)
 gchromVAR_ranksum &lt;-<span class="st"> </span><span class="kw">sum</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">dim</span>(zdf)[<span class="dv">1</span>]<span class="op">*</span>zdf[<span class="kw"><a href="http://www.rdocumentation.org/packages/data.table/topics/setorder">order</a></span>(zdf<span class="op">$</span>gchromVAR_pvalue, <span class="dt">decreasing =</span> <span class="ot">FALSE</span>), <span class="st">"LS"</span>])
 permuted &lt;-<span class="st"> </span><span class="kw">sapply</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">10000</span>, <span class="cf">function</span>(i) <span class="kw">sum</span>(<span class="dv">1</span><span class="op">:</span><span class="kw">dim</span>(zdf)[<span class="dv">1</span>] <span class="op">*</span><span class="st"> </span><span class="kw">sample</span>(zdf<span class="op">$</span>LS, <span class="kw">length</span>(zdf<span class="op">$</span>LS))))
 <span class="kw">pnorm</span>((<span class="kw">mean</span>(permuted) <span class="op">-</span><span class="st"> </span>gchromVAR_ranksum)<span class="op">/</span><span class="kw">sd</span>(permuted), <span class="dt">lower.tail =</span> <span class="ot">FALSE</span>)</code></pre></div>
 <pre><code>## [1] 5.075067e-15</code></pre>
+<p>From this statistic, we can see that lineage-specific enrichments for much stronger for <strong>gchromVAR</strong> than we’d expect by chance. We quantified this for several related methods on the initial landing page, demonstrating the utility of our approach.</p>
 </div>
 <div id="extracting-individual-enrichments" class="section level2">
 <h2 class="hasAnchor">
 <a href="#extracting-individual-enrichments" class="anchor"></a>Extracting Individual Enrichments</h2>
+<p>Finally, we can do a simple Bonferonni-correction threshold to see that nearly all of the enrichments from <strong>gchromVAR</strong> are lineage specific. Moverover, these enrichments corroborate known biology in hematopoesis.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">zdf[zdf<span class="op">$</span>gchromVAR_pvalue <span class="op">&lt;</span><span class="st"> </span><span class="fl">0.05</span><span class="op">/</span><span class="dv">288</span> , ]</code></pre></div>
 <pre><code>##        ct             tr    Zscore LS gchromVAR_pvalue
 ## 74    CD4    LYMPH_COUNT  4.199441  1     1.337873e-05
