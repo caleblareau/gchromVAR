@@ -100,11 +100,12 @@ cwdc <- function(counts_mat, weights, background_peaks, expectation,
   dev <- t(vapply(results, function(x) x[["dev"]], rep(0, ncol(counts_mat))))
   
   if(dim(z)[1] == 1){
-      z <- t(z)
-      dev <- t(dev)
+    z <- t(z)
+    dev <- t(dev)
+    rownames(z) <- rownames(dev) <- sample_names
+  } else{
+    colnames(z) <- colnames(dev) <- sample_names
   }
-  
-  colnames(z) <- colnames(dev) <- sample_names
   
   out <- SummarizedExperiment(assays = list(deviations = dev, z = z),
                               colData = colData,
