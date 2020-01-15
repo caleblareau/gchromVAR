@@ -13,15 +13,13 @@ Description: R package for computing cell-type specific GWAS enrichments
 	from Finemapping data and quantitative epigenomic data. 
 Imports:
     methods,
-    BiocGenerics,
     BiocParallel,
     chromVAR,
-    chromVARmotifs,
-    motifmatchr,
     SummarizedExperiment,
     Matrix,
     GenomicRanges,
-    S4Vectors
+    S4Vectors,
+    stats
 License: MIT + file LICENSE
 LazyData: TRUE
 Suggests:
